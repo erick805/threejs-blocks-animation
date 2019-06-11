@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>ThreeJS Animation</title>
+    <link rel="stylesheet" href="css/main.css" />
+  </head>
+  <body>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/102/three.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/2.1.2/TweenMax.min.js"></script>
+    <script>
+      // 1) creates a scene where objects and lights go
+      let scene = new THREE.Scene();
+      // 2) creates a camera (FOV, aspect ratio, near plane, far plane)
+      let camera = new THREE.PerspectiveCamera(
+        75,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        1000
+      );
+
+      // set the camera positon in order for object to appear on scene
+      // how close are we to object? (make it DYNAMIC)
+      camera.position.z = 5;
+
+      // 3) creates a renderer, without antialias it would look jagged
+      let renderer = new THREE.WebGLRenderer({ antialias: true });
+
+      // background color for renderer - clear/light grey
+      renderer.setClearColor("#e5e5e5");
+
+      // set size of renderer, typical for windows
+      renderer.setSize(window.innerWidth, window.innerHeight);
+
+      // create our canvas element with our render settings so far
+      document.body.appendChild(renderer.domElement);
+
+      // allows window to resize background DOM event listener
+      window.addEventListener("resize", () => {
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        // readjusts the aspect ratio when window event listener fires
+        camera.aspect = window.innerWidth / window.innerHeight;
+
+        // updates projection matrix
+        camera.updateProjectionMatrix();
+      });
+
+      // **RAYCASTING FOR MOUSE EVENTS (MOUSE OVER)**
+      var raycaster = new THREE.Raycaster();
+      var mouse = new THREE.Vector2();
+
+      // importing/setting and creating material for 3D (sphere)
+      // let geometry = new THREE.SphereGeometry(1, 4, 4);
+
+      // TO CREATE a 3D element you need the FORM(shape) and MATERIAL
+      // creates a 3D BOX (x,y,z)
+      var geometry = new THREE.BoxGeometry(1, 1, 1);
+      // creates the material and color of the 3D shape
+      var material = new THREE.MeshLambertMaterial({ color: 0xf7f7f7 });
+
+      // puts the shape together with the material
+      // var mesh = new THREE.Mesh(geometry, material);
+
+      // puts the 3D object made into the scene
+      // scene.add(mesh)
+
+      // starting point for FOR LOOP
+      meshX = -10;
+
+      // FOR LOOP to create random objects and add to scene
+      for (let i = 0; i < 15; i++) {
+        var mesh = new THREE.Mesh(geometry, material);
+        // change the position/view of object USE MESH
+        // NEGATIVE VALUES INVERTS IT ALONG THAT AXIS
+
+        // X AXIS - UP DOWN
+        mesh.position.x = (Math.random() - 0.5) * 10;
+        // Y AXIS - LEFT RIGHT
+        mesh.position.y = (Math.random() - 0.5) * 10;
+        // Z AXIS - FORWARD BACK
+        mesh.position.z = (Math.random() - 0.5) * 10;
+
+        scene.add(mesh);
+        meshX += 1;
+      }
+      // moves the position view of the object
+      // mesh.position.x = -2;
+      // mesh.position.y = 2;
+      // mesh.position.z = 2;
+
+      // SET METHOD IS SHORTHAND FOR SETTING (X, Y, Z)
+      // mesh.position.set(2, 2, -2);
+
+      // **SCALES** (X, Y, Z)
+      // mesh.scale.set(1, 2, 1);
+
+      // **ROTATION**
+      // mesh.rotation.set(45, 0, 0);
+
+      // add the object to scene
+      // scene.add(mesh);
+
+      // set/add light/ makes object color
+      var light = new THREE.PointLight(0xffffff, 1, 1000);
+      light.position.set(0, 0, 0);
+      // adds light to the scene
+      scene.add(light);
+
+      // **ADDING NEW LIGHT MAKES SHADOWS LIGHTER**
+      // adding light affected the intensity of *2* and shadow
+      var light = new THREE.PointLight(0xffffff, 2, 1000);
+      // set position of light (x,y,z)
+      light.position.set(0, 0, 25);
+      // adds light to the scene
+      scene.add(light);
+
+      // render sets the background/scene/camera
+
+      // **IMPORTANT LOOP FOR IMAGE TO STAY STABLE WHEN WEBPAGE REFRESHES**
+      let render = function() {
+        // IT CREATES A LOOP to draw scene again, so 3D objects don't get distorted when screen is refreshed
+        requestAnimationFrame(render);
+
+        // rotates on a LOOP increments/rotates on X AXIS
+        // mesh.rotation.x += 0.05;
+        // rotates on a LOOP increments/rotates on Y AXIS
+        // mesh.rotation.y += 0.01;
+
+        // SCALES ON A LOOP ON THE X -AXIS **(GROWING EFFECT - INVERTS ITSELF)**
+        // mesh.scale.x -= 0.01;
+
+        // *****NEEDED TO RENDER SCENE*****
+        renderer.render(scene, camera);
+      };
+
+      // event listener using raycaster
+      function onMouseMove(event) {
+        event.preventDefault();
+
+        // default positions for calculating mouse positions in normalized device coordinates
+        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+        // update the picking ray with camera and mouse position
+        raycaster.setFromCamera(mouse, camera);
+
+        // returns an array with all mouse intersections with the scene
+        var intersects = raycaster.intersectObjects(scene.children, true);
+
+        for (var i = 0; i < intersects.length; i++) {
+          // use the GSAP timeline for animation
+          //  .delay maybe needed? for jaggedness
+          // can pause animation w/ timeline parameter ({paused: true}) to pause animation
+          this.tl = new TimelineMax();
+          // causes object to scale out by 2 along x - axis
+          // this.tl.to(this.mesh.scale .....)
+          // this.tl.to(this.mesh.position .....)
+          // this.tl.to(this.mesh.rotation ......)
+          this.tl.to(intersects[i].object.scale, 1, {
+            x: 2,
+            ease: Expo.easeOut
+          });
+          this.tl.to(intersects[i].object.scale, 0.5, {
+            x: 0.5,
+            ease: Expo.easeOut
+          });
+          // changes object position by 0.5 seconds
+          this.tl.to(intersects[i].object.position, 0.5, {
+            x: 2,
+            ease: Expo.easeOut
+          });
+          // changes object rotation balong y-axis, **will happen 1.5 seconds before it normally would**
+          this.tl.to(
+            intersects[i].object.rotation,
+            0.5,
+            {
+              y: Math.PI * 0.5,
+              ease: Expo.easeOut
+            },
+            "=-1.5"
+          );
+        }
+      }
+      // add eventlistener for RAYCASTER onMouseMove function
+      window.addEventListener(
+        "mousemove",
+        onMouseMove
+        // plays the timeline event
+        // this.tl.play();
+      );
+
+      render();
+    </script>
+  </body>
+</html>

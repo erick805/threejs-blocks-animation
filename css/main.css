@@ -1,0 +1,9 @@
+/* gets rid of scroll bars */
+body {
+  margin: 0;
+  height: 100vh;
+}
+
+canvas {
+  display: block;
+}
